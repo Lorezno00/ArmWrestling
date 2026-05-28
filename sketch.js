@@ -1,13 +1,9 @@
-/* ── Configurazione ── */
 const START_FRAME = 1;     
 const END_FRAME = 108;       
 const FPS = 8;             
 const IMG_FOLDER = "assets/";
 const IMG_EXT = ".jpg";     
 
-/* ── Dizionario dei Testi Personalizzati ── */
-/* Scrivi qui a mano il testo per ogni numero di foto. 
-   Ricordati di mettere la virgola alla fine di ogni riga! */
 const TESTI_FOTO = {  
     1: "08/04/1983 NANCY_REAGAN WASHINGTON USA",
     2: "10/01/1983 ED_KOCH NEW_YORK USA",
@@ -123,21 +119,30 @@ const TESTI_FOTO = {
 let currentFrame = START_FRAME; 
 let isPausedBySpace = false; 
 let interval = null;
+let loadedImagesCount = 0;
+const totalImages = END_FRAME - START_FRAME + 1;
 
-/* ── Riferimenti agli elementi HTML ── */
+/* ── Riferimenti HTML ── */
 const img = document.getElementById("frame");
-const textEl = document.getElementById("frame-text");
-
+const textAEl = document.getElementById("text-a"); 
+const textBEl = document.getElementById("text-b"); 
 
 /* ── Funzioni Logiche ── */
-
 function showFrame(n) {
     img.src = IMG_FOLDER + n + IMG_EXT;
-    const datiFoto = TESTI_FOTO[n];
-    if (datiFoto) {
-        textEl.textContent = datiFoto;
+    const stringaCompleta = TESTI_FOTO[n];
+    
+    if (stringaCompleta) {
+        // Dividi la stringa usando gli spazi come separatore
+        const parti = stringaCompleta.split(" ");
+        
+        // Data + Nome (Box A)
+        textAEl.textContent = parti[0] + " " + parti[1];
+        // Città + Nazione (Box B)
+        textBEl.textContent = parti[2] + " " + parti[3];
     } else {
-        textEl.textContent = n + IMG_EXT;
+        textAEl.textContent = n + IMG_EXT;
+        textBEl.textContent = "";
     }
 }
 
@@ -161,8 +166,7 @@ function pause() {
     interval = null;
 }
 
-/* ── Gestione Tastiera (Unificata) ── */
-
+/* ── Gestione Tastiera ── */
 document.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
         e.preventDefault(); 
@@ -171,7 +175,6 @@ document.addEventListener("keydown", (e) => {
             pause();
         }
     }
-
     if (isPausedBySpace) {
         if (e.code === "ArrowRight" || e.code === "ArrowUp") {
             e.preventDefault();
@@ -192,6 +195,28 @@ document.addEventListener("keyup", (e) => {
     }
 });
 
-/* ── Avvio Automatico ── */
-showFrame(currentFrame);
-play();
+/* ── Sistema di Precaricamento Cache ── */
+function preloadAllImages() {
+    for (let i = START_FRAME; i <= END_FRAME; i++) {
+        const imgCache = new Image();
+        imgCache.src = IMG_FOLDER + i + IMG_EXT;
+        
+        imgCache.onload = () => handleImageLoad();
+        imgCache.onerror = () => handleImageLoad(); // Evita blocchi se manca un file
+    }
+}
+
+function handleImageLoad() {
+    loadedImagesCount++;
+    if (loadedImagesCount === totalImages) {
+        startApplication();
+    }
+}
+
+function startApplication() {
+    showFrame(currentFrame);
+    play(); 
+}
+
+/* ── Inizializzazione ── */
+preloadAllImages();
