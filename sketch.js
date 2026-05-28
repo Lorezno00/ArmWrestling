@@ -122,27 +122,26 @@ let interval = null;
 let loadedImagesCount = 0;
 const totalImages = END_FRAME - START_FRAME + 1;
 
+/* ── Archivio di Persistenza della RAM ── */
+const immaginiCaricate = {}; 
+
 /* ── Riferimenti HTML ── */
-const img = document.getElementById("frame");
-const textAEl = document.getElementById("text-a"); 
-const textBEl = document.getElementById("text-b"); 
+const viewerEl = document.querySelector(".viewer"); 
+const textEl = document.getElementById("frame-text");
 
 /* ── Funzioni Logiche ── */
 function showFrame(n) {
-    img.src = IMG_FOLDER + n + IMG_EXT;
+    // Sostituzione dell'elemento DOM invece del src per azzerare la decodifica istantanea
+    viewerEl.innerHTML = "";
+    if (immaginiCaricate[n]) {
+        viewerEl.appendChild(immaginiCaricate[n]);
+    }
+
     const stringaCompleta = TESTI_FOTO[n];
-    
     if (stringaCompleta) {
-        // Dividi la stringa usando gli spazi come separatore
-        const parti = stringaCompleta.split(" ");
-        
-        // Data + Nome (Box A)
-        textAEl.textContent = parti[0] + " " + parti[1];
-        // Città + Nazione (Box B)
-        textBEl.textContent = parti[2] + " " + parti[3];
+        textEl.textContent = stringaCompleta;
     } else {
-        textAEl.textContent = n + IMG_EXT;
-        textBEl.textContent = "";
+        textEl.textContent = n + IMG_EXT;
     }
 }
 
@@ -195,14 +194,18 @@ document.addEventListener("keyup", (e) => {
     }
 });
 
-/* ── Sistema di Precaricamento Cache ── */
+/* ── Sistema di Precaricamento Cache Reale ── */
 function preloadAllImages() {
     for (let i = START_FRAME; i <= END_FRAME; i++) {
         const imgCache = new Image();
+        imgCache.id = "frame"; // Preserva selettore CSS
         imgCache.src = IMG_FOLDER + i + IMG_EXT;
         
+        // Blocca l'oggetto in un archivio persistente globale per ingannare il Garbage Collector
+        immaginiCaricate[i] = imgCache;
+        
         imgCache.onload = () => handleImageLoad();
-        imgCache.onerror = () => handleImageLoad(); // Evita blocchi se manca un file
+        imgCache.onerror = () => handleImageLoad(); 
     }
 }
 
